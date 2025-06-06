@@ -1,0 +1,10 @@
+fcast_api/saved_models/*
+fcast_api/.devcontainer/*
+fcast_api/app/metrics/*
+fcast_api/app/utils/output/*
+fcast_api/app/routers/__pycache__/*
+fcast_api/app/utils/__pycache__/*
+fcast_api/app/model/__pycache__/*
+fcast_api/__pycache__/*
+fcast_api/.github/dependabot.yml
+fcast_api/app/__pycache__/*
