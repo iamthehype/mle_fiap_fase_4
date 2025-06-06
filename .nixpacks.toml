@@ -1,0 +1,4 @@
+[phases.setup]
+nixPkgs = ["docker"]
+[build]
+builder = "docker"
