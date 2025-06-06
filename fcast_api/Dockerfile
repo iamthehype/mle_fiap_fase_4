@@ -14,7 +14,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 
 RUN poetry --version
 
-WORKDIR /app
+WORKDIR /fcast_api
 
 COPY pyproject.toml poetry.lock* ./
 
