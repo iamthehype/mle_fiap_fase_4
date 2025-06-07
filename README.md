@@ -1,69 +1,154 @@
-# PI de Previsão de Ações
-Esta API permite prever preços de ações com base em dados históricos do Yahoo Finance. São disponibilizadas rotas para previsão individual, múltipla (batch), e listagem de modelos salvos.
+# 📈 LSTM Stock Forecasting API
 
-# Rotas Disponíveis
+Este projeto fornece uma API desenvolvida com **FastAPI** para previsão de preços de ações com base em dados históricos. Utiliza redes neurais LSTM implementadas com **TensorFlow**, processamento de dados com **Polars**, e normalização via **scikit-learn**.
 
-### GET /
+## 🚀 Funcionalidades
 
-Executa previsão para 5 tickers pré-definidos (AAPL, MSFT, GOOGL, META, TSLA).
+- 🔮 Previsão de preços de ações usando LSTM
+- 🔁 Treinamento automático e reutilização de modelos salvos
+- ⚖️ Normalização de dados com janela deslizante
+- 📊 Avaliação com métricas de regressão
+- 🌐 API REST com rotas de previsão individual e em lote
 
-Exemplo de uso com curl:
+## 📂 Estrutura do Projeto
 
-curl http://localhost:8000/
+```
+mle_fiap_fase_4/
+├── app/
+│   ├── model/
+│   │   └── forecast.py
+│   ├── routes/
+│   │   └── router.py
+│   ├── utils/
+│   │   └── etl.py
+│   ├── metrics/
+│   │   └── evaluate.py
+│   └── main.py
+├── saved_models/
+└── README.md
+```
+
+## ⚙️ Configuração e Execução
+
+### 1. Instalação das dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Rodando o servidor
+
+```bash
+uvicorn app.main:app --reload
+```
+
+A API estará disponível em: http://localhost:8000
+
+## 📥 Exemplo de Requisição (POST /forecast)
+
+```http
 POST /forecast
-
-Executa previsão de uma única ação com base nos dados enviados no corpo da requisição.
-
-Corpo esperado:
+Content-Type: application/json
+```
 
 ```json
 {
   "ticker": "AAPL",
-  "start_date": "2020-01-01",
-  "end_date": "2023-01-01",
+  "start_date": "2023-01-01",
+  "end_date": "2024-01-01",
   "window_size": 60,
-  "epochs": 10,
+  "epochs": 100,
   "batch_size": 32
 }
 ```
 
-### Exemplo com curl:
+### 🟢 Exemplo de Resposta
 
-```bash
-curl -X POST http://localhost:8000/forecast \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ticker": "AAPL",
-    "start_date": "2020-01-01",
-    "end_date": "2023-01-01",
-    "window_size": 60,
-    "epochs": 10,
-    "batch_size": 32
-  }'
+```json
+{
+  "ticker": "AAPL",
+  "status": "success",
+  "model": {
+    "path": "saved_models/aapl_ws60.keras",
+    "window_size": 60
+  },
+  "prediction_summary": {
+    "last_real_value": 182.12,
+    "last_predicted_value": 181.34,
+    "metrics": {
+      "MAE": 1.23,
+      "MSE": 2.45,
+      "RMSE": 1.56,
+      "R2": 0.93
+    }
+  },
+  "forecast_series": {
+    "real_values": [...],
+    "predicted_values": [...]
+  }
+}
 ```
 
-### GET /forecast/batch/{count}
+## 🔀 Endpoints Disponíveis
 
-Executa previsão para múltiplos tickers (até o número informado em count). Os tickers estão definidos internamente.
+| Método | Rota                        | Descrição                                         |
+|--------|-----------------------------|---------------------------------------------------|
+| GET    | `/`                         | Previsão padrão para `AAPL` e `MSFT`              |
+| POST   | `/forecast`                | Previsão customizada para um ticker específico    |
+| GET    | `/tickers`                 | Lista de modelos salvos no diretório local        |
+| GET    | `/forecast/batch/{count}`  | Executa previsões em lote para múltiplos tickers  |
 
+## 📊 Arquitetura do Modelo
 
-Exemplo com curl (para os 10 primeiros tickers):
-
-```bash
-curl "http://localhost:8000/forecast/batch/10?start_date=2020-01-01&end_date=2023-01-01&window_size=60&epochs=5&batch_size=32"
+```python
+LSTM(100) → BatchNormalization → Dropout(0.2)
+→ LSTM(100) → BatchNormalization → Dropout(0.2)
+→ LSTM(50)
+→ Dense(20, activation='relu')
+→ Dense(1)
 ```
 
-### GET /tickers
+## 📈 Métricas de Avaliação
 
-Retorna a lista de tickers com modelos previamente salvos.
+- MAE: Mean Absolute Error
+- MSE: Mean Squared Error
+- RMSE: Root Mean Squared Error
+- R²: Coeficiente de Determinação
 
-```bash
-curl http://localhost:8000/tickers
+## 🧠 Estratégia de Treinamento
+
+- Split 80/20 para treino/teste
+- Normalização com MinMaxScaler
+- Validação: 10%
+- Persistência automática do modelo `.keras` por ticker
+
+## 🗃️ Persistência
+
+Os modelos são salvos no formato:
+
+```
+saved_models/{ticker}_ws{window_size}.keras
 ```
 
-### >> Observações <<
-O treinamento do modelo pode ser demorado dependendo do número de épocas (epochs) e da quantidade de dados.
+Na próxima requisição com os mesmos parâmetros, o modelo é carregado ao invés de ser refeito.
 
-A API salva os modelos treinados em saved_models/ e reutiliza-os quando disponíveis.
+## 📌 Requisitos
 
-Requisições em lote (batch) possuem um sleep(3) entre execuções para evitar bloqueios da API do Yahoo Finance.
+```text
+fastapi
+polars
+numpy
+scikit-learn
+tensorflow
+pydantic
+```
+
+> Obs.: o uso de GPU é desabilitado via `os.environ["CUDA_VISIBLE_DEVICES"] = "-1"` por padrão.
+
+## 📜 Licença
+
+Este projeto está licenciado sob a licença MIT.
+
+## 🤝 Contribuições
+
+Contribuições são bem-vindas! Abra uma issue ou envie um pull request.
