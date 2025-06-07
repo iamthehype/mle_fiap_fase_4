@@ -10,5 +10,5 @@
 docker build -t fcast-api .
 docker run -d \
  --name fcast-api \
- -p 8000:8000 \
+ -p 8080:8080 \
  fcast-api
